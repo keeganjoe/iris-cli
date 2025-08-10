@@ -34,6 +34,7 @@ import { retryWithBackoff } from '../utils/retry.js';
 import { getErrorMessage } from '../utils/errors.js';
 import { isFunctionResponse } from '../utils/messageInspectors.js';
 import { tokenLimit } from './tokenLimits.js';
+import { AgenticTurn, ExtendedServerGeminiStreamEvent } from './agenticTurn.js';
 import {
   AuthType,
   ContentGenerator,
@@ -244,7 +245,7 @@ export class GeminiClient {
     prompt_id: string,
     turns: number = this.MAX_TURNS,
     originalModel?: string,
-  ): AsyncGenerator<ServerGeminiStreamEvent, Turn> {
+  ): AsyncGenerator<ExtendedServerGeminiStreamEvent, Turn | AgenticTurn> {
     if (this.lastPromptId !== prompt_id) {
       this.loopDetector.reset(prompt_id);
       this.lastPromptId = prompt_id;
@@ -318,7 +319,10 @@ export class GeminiClient {
       }
     }
 
-    const turn = new Turn(this.getChat(), prompt_id);
+    // Use AgenticTurn if agentic mode is enabled, otherwise use regular Turn  
+    const turn: Turn | AgenticTurn = this.config.getAgenticMode() 
+      ? new AgenticTurn(this.getChat(), prompt_id, this.config)
+      : new Turn(this.getChat(), prompt_id);
 
     const loopDetected = await this.loopDetector.turnStarted(signal);
     if (loopDetected) {
@@ -328,9 +332,12 @@ export class GeminiClient {
 
     const resultStream = turn.run(request, signal);
     for await (const event of resultStream) {
-      if (this.loopDetector.addAndCheck(event)) {
-        yield { type: GeminiEventType.LoopDetected };
-        return turn;
+      // Only pass regular Gemini events to loop detector
+      if ('type' in event && Object.values(GeminiEventType).includes(event.type as GeminiEventType)) {
+        if (this.loopDetector.addAndCheck(event as ServerGeminiStreamEvent)) {
+          yield { type: GeminiEventType.LoopDetected };
+          return turn;
+        }
       }
       yield event;
     }

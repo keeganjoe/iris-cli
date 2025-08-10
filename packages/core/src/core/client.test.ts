@@ -942,7 +942,7 @@ Here are some files the user has open, with the most recent at the top:
       );
 
       // Consume the stream manually to get the final return value.
-      let finalResult: Turn | undefined;
+      let finalResult: any;
       while (true) {
         const result = await stream.next();
         if (result.done) {
@@ -997,7 +997,7 @@ Here are some files the user has open, with the most recent at the top:
 
       // Count how many stream events we get
       let eventCount = 0;
-      let finalResult: Turn | undefined;
+      let finalResult: any;
 
       // Consume the stream and count iterations
       while (true) {

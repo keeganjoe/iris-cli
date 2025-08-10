@@ -141,6 +141,9 @@ export interface Settings {
   loadMemoryFromIncludeDirectories?: boolean;
 
   chatCompression?: ChatCompressionSettings;
+  
+  // Enable agentic mode for automatic task planning and management
+  agenticMode?: boolean;
 }
 
 export interface SettingsError {

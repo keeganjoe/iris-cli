@@ -48,6 +48,7 @@ import { shouldAttemptBrowserLaunch } from '../utils/browser.js';
 import { MCPOAuthConfig } from '../mcp/oauth-provider.js';
 import { IdeClient } from '../ide/ide-client.js';
 import type { Content } from '@google/genai';
+import { UniversalClient } from '../core/universalClient.js';
 import { logIdeConnection } from '../telemetry/loggers.js';
 import { IdeConnectionEvent, IdeConnectionType } from '../telemetry/types.js';
 
@@ -198,6 +199,7 @@ export interface ConfigParameters {
   loadMemoryFromIncludeDirectories?: boolean;
   chatCompression?: ChatCompressionSettings;
   interactive?: boolean;
+  agenticMode?: boolean;
 }
 
 export class Config {
@@ -226,6 +228,7 @@ export class Config {
   private readonly telemetrySettings: TelemetrySettings;
   private readonly usageStatisticsEnabled: boolean;
   private geminiClient!: GeminiClient;
+  private universalClient?: UniversalClient;
   private readonly fileFiltering: {
     respectGitIgnore: boolean;
     respectGeminiIgnore: boolean;
@@ -262,6 +265,7 @@ export class Config {
   private readonly loadMemoryFromIncludeDirectories: boolean = false;
   private readonly chatCompression: ChatCompressionSettings | undefined;
   private readonly interactive: boolean;
+  private readonly agenticMode: boolean;
   private initialized: boolean = false;
 
   constructor(params: ConfigParameters) {
@@ -330,6 +334,7 @@ export class Config {
       params.loadMemoryFromIncludeDirectories ?? false;
     this.chatCompression = params.chatCompression;
     this.interactive = params.interactive ?? false;
+    this.agenticMode = params.agenticMode ?? false;
 
     if (params.contextFileName) {
       setGeminiMdFilename(params.contextFileName);
@@ -571,6 +576,30 @@ export class Config {
     return this.geminiClient;
   }
 
+  /**
+   * Get universal client that can work with any provider (Gemini, OpenAI, etc.)
+   * This is the preferred method for new code.
+   */
+  getUniversalClient(): UniversalClient {
+    if (!this.universalClient) {
+      this.universalClient = new UniversalClient(this);
+    }
+    return this.universalClient;
+  }
+
+  /**
+   * Get provider-aware client based on current authentication
+   * For OpenAI: returns UniversalClient
+   * For Gemini: returns existing GeminiClient (backward compatibility)
+   */
+  getProviderAwareClient(): UniversalClient | GeminiClient {
+    const authType = this.getContentGeneratorConfig()?.authType;
+    if (authType === AuthType.USE_OPENAI) {
+      return this.getUniversalClient();
+    }
+    return this.getGeminiClient();
+  }
+
   getGeminiDir(): string {
     return path.join(this.targetDir, GEMINI_DIR);
   }
@@ -698,6 +727,10 @@ export class Config {
 
   isInteractive(): boolean {
     return this.interactive;
+  }
+
+  getAgenticMode(): boolean {
+    return this.agenticMode;
   }
 
   async getGitService(): Promise<GitService> {

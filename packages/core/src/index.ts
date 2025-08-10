@@ -15,6 +15,7 @@ export * from './core/logger.js';
 export * from './core/prompts.js';
 export * from './core/tokenLimits.js';
 export * from './core/turn.js';
+export * from './core/agenticTurn.js';
 export * from './core/geminiRequest.js';
 export * from './core/coreToolScheduler.js';
 export * from './core/nonInteractiveToolExecutor.js';
@@ -45,6 +46,9 @@ export * from './utils/filesearch/fileSearch.js';
 // Export services
 export * from './services/fileDiscoveryService.js';
 export * from './services/gitService.js';
+export * from './services/taskPersistenceService.js';
+export * from './services/progressTracker.js';
+export * from './services/sessionRecoveryService.js';
 
 // Export IDE specific logic
 export * from './ide/ide-client.js';
@@ -91,6 +95,10 @@ export type {
   OAuthProtectedResourceMetadata,
 } from './mcp/oauth-utils.js';
 export { OAuthUtils } from './mcp/oauth-utils.js';
+
+// Export types
+export * from './types/task.js';
+export * from './types/checkpoint.js';
 
 // Export telemetry functions
 export * from './telemetry/index.js';

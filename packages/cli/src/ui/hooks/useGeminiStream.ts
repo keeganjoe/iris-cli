@@ -10,7 +10,8 @@ import {
   Config,
   GeminiClient,
   GeminiEventType as ServerGeminiEventType,
-  ServerGeminiStreamEvent as GeminiEvent,
+  ExtendedServerGeminiStreamEvent as GeminiEvent,
+  AgenticEventType,
   ServerGeminiContentEvent as ContentEvent,
   ServerGeminiErrorEvent as ErrorEvent,
   ServerGeminiChatCompressedEvent,
@@ -576,6 +577,21 @@ export const useGeminiStream = (
             // before we add loop detected message to history
             loopDetectedRef.current = true;
             break;
+          
+          // Agentic event types - handle gracefully for now
+          case AgenticEventType.TaskPlanCreated:
+          case AgenticEventType.TaskStarted:
+          case AgenticEventType.TaskProgress:
+          case AgenticEventType.TaskCompleted:
+          case AgenticEventType.SubtaskStarted:
+          case AgenticEventType.SubtaskCompleted:
+          case AgenticEventType.GoalAchieved:
+          case AgenticEventType.PlanningError:
+          case AgenticEventType.AgenticModeDisabled:
+            // For now, just log agentic events - could be enhanced later
+            console.log('Agentic event:', event.type, event.value);
+            break;
+          
           default: {
             // enforces exhaustive switch-case
             const unreachable: never = event;

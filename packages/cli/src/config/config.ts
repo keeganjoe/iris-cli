@@ -488,6 +488,7 @@ export async function loadCliConfig(
     folderTrustFeature,
     interactive,
     folderTrust,
+    agenticMode: settings.agenticMode || false,
   });
 }
 
