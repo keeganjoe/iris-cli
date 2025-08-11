@@ -411,10 +411,35 @@ export class Config {
     return this.contentGeneratorConfig?.model || this.model;
   }
 
-  setModel(newModel: string): void {
-    if (this.contentGeneratorConfig) {
-      this.contentGeneratorConfig.model = newModel;
+  async setModel(newModel: string): Promise<void> {
+    // Save the current conversation history before creating a new client
+    let existingHistory: Content[] = [];
+    if (this.geminiClient && this.geminiClient.isInitialized()) {
+      existingHistory = this.geminiClient.getHistory();
     }
+
+    // Create new content generator config with the new model
+    const newContentGeneratorConfig = createContentGeneratorConfig(
+      this,
+      this.contentGeneratorConfig?.authType,
+    );
+    newContentGeneratorConfig.model = newModel;
+
+    // Create and initialize new client in local variable first
+    const newGeminiClient = new GeminiClient(this);
+    await newGeminiClient.initialize(newContentGeneratorConfig);
+
+    // Only assign to instance properties after successful initialization
+    this.contentGeneratorConfig = newContentGeneratorConfig;
+    this.geminiClient = newGeminiClient;
+
+    // Restore the conversation history to the new client
+    if (existingHistory.length > 0) {
+      this.geminiClient.setHistory(existingHistory);
+    }
+
+    // Reset the session flag since we're explicitly changing model
+    this.inFallbackMode = false;
   }
 
   isInFallbackMode(): boolean {

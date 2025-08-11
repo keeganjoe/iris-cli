@@ -14,11 +14,12 @@ import {
   GoogleGenAI,
 } from '@google/genai';
 import { createCodeAssistContentGenerator } from '../code_assist/codeAssist.js';
-import { DEFAULT_GEMINI_MODEL } from '../config/models.js';
+import { DEFAULT_GEMINI_MODEL, DEFAULT_OPENAI_MODEL } from '../config/models.js';
 import { Config } from '../config/config.js';
 import { getEffectiveModel } from './modelCheck.js';
 import { UserTierId } from '../code_assist/types.js';
 import { LoggingContentGenerator } from './loggingContentGenerator.js';
+import { OpenAIProvider } from './openaiProvider.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -46,6 +47,7 @@ export enum AuthType {
   USE_GEMINI = 'gemini-api-key',
   USE_VERTEX_AI = 'vertex-ai',
   CLOUD_SHELL = 'cloud-shell',
+  USE_OPENAI = 'openai-api-key',
 }
 
 export type ContentGeneratorConfig = {
@@ -54,6 +56,7 @@ export type ContentGeneratorConfig = {
   vertexai?: boolean;
   authType?: AuthType | undefined;
   proxy?: string | undefined;
+  provider?: string;
 };
 
 export function createContentGeneratorConfig(
@@ -64,14 +67,17 @@ export function createContentGeneratorConfig(
   const googleApiKey = process.env.GOOGLE_API_KEY || undefined;
   const googleCloudProject = process.env.GOOGLE_CLOUD_PROJECT || undefined;
   const googleCloudLocation = process.env.GOOGLE_CLOUD_LOCATION || undefined;
+  const openaiApiKey = process.env.OPENAI_API_KEY || undefined;
 
   // Use runtime model from config if available; otherwise, fall back to parameter or default
-  const effectiveModel = config.getModel() || DEFAULT_GEMINI_MODEL;
+  const effectiveModel = config.getModel() || 
+    (authType === AuthType.USE_OPENAI ? DEFAULT_OPENAI_MODEL : DEFAULT_GEMINI_MODEL);
 
   const contentGeneratorConfig: ContentGeneratorConfig = {
     model: effectiveModel,
     authType,
     proxy: config?.getProxy(),
+    provider: authType === AuthType.USE_OPENAI ? 'openai' : 'gemini',
   };
 
   // If we are using Google auth or we are in Cloud Shell, there is nothing else to validate for now
@@ -100,6 +106,13 @@ export function createContentGeneratorConfig(
   ) {
     contentGeneratorConfig.apiKey = googleApiKey;
     contentGeneratorConfig.vertexai = true;
+
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OPENAI && openaiApiKey) {
+    contentGeneratorConfig.apiKey = openaiApiKey;
+    contentGeneratorConfig.vertexai = false;
 
     return contentGeneratorConfig;
   }
@@ -144,6 +157,15 @@ export async function createContentGenerator(
     });
     return new LoggingContentGenerator(googleGenAI.models, gcConfig);
   }
+
+  if (config.authType === AuthType.USE_OPENAI) {
+    if (!config.apiKey) {
+      throw new Error('OpenAI API key is required');
+    }
+    const openaiProvider = new OpenAIProvider(config.apiKey, config.model);
+    return new LoggingContentGenerator(openaiProvider, gcConfig);
+  }
+
   throw new Error(
     `Error creating contentGenerator: Unsupported authType: ${config.authType}`,
   );
