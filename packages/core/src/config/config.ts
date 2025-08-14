@@ -24,8 +24,8 @@ import { WebFetchTool } from '../tools/web-fetch.js';
 import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import {
   MemoryTool,
-  setGeminiMdFilename,
-  GEMINI_CONFIG_DIR as GEMINI_DIR,
+  setIrisMdFilename,
+  IRIS_CONFIG_DIR as GEMINI_DIR,
 } from '../tools/memoryTool.js';
 import { WebSearchTool } from '../tools/web-search.js';
 import { GeminiClient } from '../core/client.js';
@@ -332,7 +332,7 @@ export class Config {
     this.interactive = params.interactive ?? false;
 
     if (params.contextFileName) {
-      setGeminiMdFilename(params.contextFileName);
+      setIrisMdFilename(params.contextFileName);
     }
 
     if (this.telemetrySettings.enabled) {

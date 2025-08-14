@@ -17,7 +17,7 @@ import {
   GeminiClient,
   ideContext,
   type AuthType,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 import { LoadedSettings, SettingsFile, Settings } from '../config/settings.js';
 import process from 'node:process';
 import { useGeminiStream } from './hooks/useGeminiStream.js';
@@ -83,16 +83,16 @@ interface MockServerConfig {
   getShowMemoryUsage: Mock<() => boolean>;
   getAccessibility: Mock<() => AccessibilitySettings>;
   getProjectRoot: Mock<() => string | undefined>;
-  getAllGeminiMdFilenames: Mock<() => string[]>;
+  getAllIrisMdFilenames: Mock<() => string[]>;
   getGeminiClient: Mock<() => GeminiClient | undefined>;
   getUserTier: Mock<() => Promise<string | undefined>>;
   getIdeClient: Mock<() => { getCurrentIde: Mock<() => string | undefined> }>;
 }
 
-// Mock @google/gemini-cli-core and its Config class
-vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+// Mock iris-cli-core and its Config class
+vi.mock('iris-cli-core', async (importOriginal) => {
   const actualCore =
-    await importOriginal<typeof import('@google/gemini-cli-core')>();
+    await importOriginal<typeof import('iris-cli-core')>();
   const ConfigClassMock = vi
     .fn()
     .mockImplementation((optionsPassedToConstructor) => {
@@ -151,7 +151,7 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
           getUserTier: vi.fn(),
         })),
         getCheckpointingEnabled: vi.fn(() => opts.checkpointing ?? true),
-        getAllGeminiMdFilenames: vi.fn(() => ['GEMINI.md']),
+        getAllIrisMdFilenames: vi.fn(() => ['GEMINI.md']),
         setFlashFallbackHandler: vi.fn(),
         getSessionId: vi.fn(() => 'test-session-id'),
         getUserTier: vi.fn().mockResolvedValue(undefined),
@@ -175,7 +175,7 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
     ...actualCore,
     Config: ConfigClassMock,
     MCPServerConfig: actualCore.MCPServerConfig,
-    getAllGeminiMdFilenames: vi.fn(() => ['GEMINI.md']),
+    getAllIrisMdFilenames: vi.fn(() => ['GEMINI.md']),
     ideContext: ideContextMock,
     isGitRepository: vi.fn(),
   };
@@ -250,7 +250,7 @@ vi.mock('../hooks/useTerminalSize.js', () => ({
 
 const mockedCheckForUpdates = vi.mocked(checkForUpdates);
 const { isGitRepository: mockedIsGitRepository } = vi.mocked(
-  await import('@google/gemini-cli-core'),
+  await import('iris-cli-core'),
 );
 
 vi.mock('node:child_process');
@@ -358,7 +358,7 @@ describe('App UI', () => {
           latest: '1.1.0',
           current: '1.0.0',
         },
-        message: 'Gemini CLI update available!',
+        message: 'Iris CLI update available!',
       };
       mockedCheckForUpdates.mockResolvedValue(info);
       const { spawn } = await import('node:child_process');
@@ -593,7 +593,7 @@ describe('App UI', () => {
       },
     });
     mockConfig.getGeminiMdFileCount.mockReturnValue(1);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue(['GEMINI.md']);
+    mockConfig.getAllIrisMdFilenames.mockReturnValue(['GEMINI.md']);
 
     const { lastFrame, unmount } = render(
       <App
@@ -611,7 +611,7 @@ describe('App UI', () => {
 
   it('should display default "GEMINI.md" in footer when contextFileName is not set and count is 1', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(1);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue(['GEMINI.md']);
+    mockConfig.getAllIrisMdFilenames.mockReturnValue(['GEMINI.md']);
     // For this test, ensure showMemoryUsage is false or debugMode is false if it relies on that
     mockConfig.getDebugMode.mockReturnValue(false);
     mockConfig.getShowMemoryUsage.mockReturnValue(false);
@@ -630,7 +630,7 @@ describe('App UI', () => {
 
   it('should display default "GEMINI.md" with plural when contextFileName is not set and count is > 1', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(2);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue([
+    mockConfig.getAllIrisMdFilenames.mockReturnValue([
       'GEMINI.md',
       'GEMINI.md',
     ]);
@@ -654,7 +654,7 @@ describe('App UI', () => {
       workspace: { contextFileName: 'AGENTS.md', theme: 'Default' },
     });
     mockConfig.getGeminiMdFileCount.mockReturnValue(1);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue(['AGENTS.md']);
+    mockConfig.getAllIrisMdFilenames.mockReturnValue(['AGENTS.md']);
     mockConfig.getDebugMode.mockReturnValue(false);
     mockConfig.getShowMemoryUsage.mockReturnValue(false);
 
@@ -678,7 +678,7 @@ describe('App UI', () => {
       },
     });
     mockConfig.getGeminiMdFileCount.mockReturnValue(2);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue([
+    mockConfig.getAllIrisMdFilenames.mockReturnValue([
       'AGENTS.md',
       'CONTEXT.md',
     ]);
@@ -702,7 +702,7 @@ describe('App UI', () => {
       workspace: { contextFileName: 'MY_NOTES.TXT', theme: 'Default' },
     });
     mockConfig.getGeminiMdFileCount.mockReturnValue(3);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue([
+    mockConfig.getAllIrisMdFilenames.mockReturnValue([
       'MY_NOTES.TXT',
       'MY_NOTES.TXT',
       'MY_NOTES.TXT',
@@ -727,7 +727,7 @@ describe('App UI', () => {
       workspace: { contextFileName: 'ANY_FILE.MD', theme: 'Default' },
     });
     mockConfig.getGeminiMdFileCount.mockReturnValue(0);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue([]);
+    mockConfig.getAllIrisMdFilenames.mockReturnValue([]);
     mockConfig.getDebugMode.mockReturnValue(false);
     mockConfig.getShowMemoryUsage.mockReturnValue(false);
 
@@ -745,7 +745,7 @@ describe('App UI', () => {
 
   it('should display GEMINI.md and MCP server count when both are present', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(2);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue([
+    mockConfig.getAllIrisMdFilenames.mockReturnValue([
       'GEMINI.md',
       'GEMINI.md',
     ]);
@@ -769,7 +769,7 @@ describe('App UI', () => {
 
   it('should display only MCP server count when GEMINI.md count is 0', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(0);
-    mockConfig.getAllGeminiMdFilenames.mockReturnValue([]);
+    mockConfig.getAllIrisMdFilenames.mockReturnValue([]);
     mockConfig.getMcpServers.mockReturnValue({
       server1: {} as MCPServerConfig,
       server2: {} as MCPServerConfig,

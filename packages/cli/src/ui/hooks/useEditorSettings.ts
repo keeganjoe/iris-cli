@@ -11,7 +11,7 @@ import {
   allowEditorTypeInSandbox,
   checkHasEditorType,
   EditorType,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 
 interface UseEditorSettingsReturn {
   isEditorDialogOpen: boolean;

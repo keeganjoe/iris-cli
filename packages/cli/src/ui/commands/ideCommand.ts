@@ -11,7 +11,7 @@ import {
   getIdeDisplayName,
   getIdeInstaller,
   IdeClient,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 import {
   CommandContext,
   SlashCommand,
@@ -64,7 +64,7 @@ export const ideCommand = (config: Config | null): SlashCommand | null => {
         ({
           type: 'message',
           messageType: 'error',
-          content: `IDE integration is not supported in your current environment. To use this feature, run Gemini CLI in one of these supported IDEs: ${Object.values(
+          content: `IDE integration is not supported in your current environment. To use this feature, run Iris CLI in one of these supported IDEs: ${Object.values(
             DetectedIde,
           )
             .map((ide) => getIdeDisplayName(ide))

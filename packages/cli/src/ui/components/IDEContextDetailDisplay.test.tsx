@@ -7,7 +7,7 @@
 import { render } from 'ink-testing-library';
 import { describe, it, expect } from 'vitest';
 import { IDEContextDetailDisplay } from './IDEContextDetailDisplay.js';
-import { type IdeContext } from '@google/gemini-cli-core';
+import { type IdeContext } from 'iris-cli-core';
 
 describe('IDEContextDetailDisplay', () => {
   it('renders an empty string when there are no open files', () => {

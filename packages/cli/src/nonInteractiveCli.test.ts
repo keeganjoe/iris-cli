@@ -12,15 +12,15 @@ import {
   shutdownTelemetry,
   GeminiEventType,
   ServerGeminiStreamEvent,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 import { Part } from '@google/genai';
 import { runNonInteractive } from './nonInteractiveCli.js';
 import { vi } from 'vitest';
 
 // Mock core modules
-vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+vi.mock('iris-cli-core', async (importOriginal) => {
   const original =
-    await importOriginal<typeof import('@google/gemini-cli-core')>();
+    await importOriginal<typeof import('iris-cli-core')>();
   return {
     ...original,
     executeToolCall: vi.fn(),

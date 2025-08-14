@@ -7,9 +7,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach, Mock } from 'vitest';
 import {
   MemoryTool,
-  setGeminiMdFilename,
-  getCurrentGeminiMdFilename,
-  getAllGeminiMdFilenames,
+  setIrisMdFilename,
+  getCurrentIrisMdFilename,
+  getAllIrisMdFilenames,
   DEFAULT_CONTEXT_FILENAME,
 } from './memoryTool.js';
 import * as fs from 'fs/promises';
@@ -58,30 +58,30 @@ describe('MemoryTool', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     // Reset GEMINI_MD_FILENAME to its original value after each test
-    setGeminiMdFilename(DEFAULT_CONTEXT_FILENAME);
+    setIrisMdFilename(DEFAULT_CONTEXT_FILENAME);
   });
 
-  describe('setGeminiMdFilename', () => {
+  describe('setIrisMdFilename', () => {
     it('should update currentGeminiMdFilename when a valid new name is provided', () => {
       const newName = 'CUSTOM_CONTEXT.md';
-      setGeminiMdFilename(newName);
-      expect(getCurrentGeminiMdFilename()).toBe(newName);
+      setIrisMdFilename(newName);
+      expect(getCurrentIrisMdFilename()).toBe(newName);
     });
 
     it('should not update currentGeminiMdFilename if the new name is empty or whitespace', () => {
-      const initialName = getCurrentGeminiMdFilename(); // Get current before trying to change
-      setGeminiMdFilename('  ');
-      expect(getCurrentGeminiMdFilename()).toBe(initialName);
+      const initialName = getCurrentIrisMdFilename(); // Get current before trying to change
+      setIrisMdFilename('  ');
+      expect(getCurrentIrisMdFilename()).toBe(initialName);
 
-      setGeminiMdFilename('');
-      expect(getCurrentGeminiMdFilename()).toBe(initialName);
+      setIrisMdFilename('');
+      expect(getCurrentIrisMdFilename()).toBe(initialName);
     });
 
     it('should handle an array of filenames', () => {
       const newNames = ['CUSTOM_CONTEXT.md', 'ANOTHER_CONTEXT.md'];
-      setGeminiMdFilename(newNames);
-      expect(getCurrentGeminiMdFilename()).toBe('CUSTOM_CONTEXT.md');
-      expect(getAllGeminiMdFilenames()).toEqual(newNames);
+      setIrisMdFilename(newNames);
+      expect(getCurrentIrisMdFilename()).toBe('CUSTOM_CONTEXT.md');
+      expect(getAllIrisMdFilenames()).toEqual(newNames);
     });
   });
 
@@ -209,11 +209,11 @@ describe('MemoryTool', () => {
     it('should call performAddMemoryEntry with correct parameters and return success', async () => {
       const params = { fact: 'The sky is blue' };
       const result = await memoryTool.execute(params, mockAbortSignal);
-      // Use getCurrentGeminiMdFilename for the default expectation before any setGeminiMdFilename calls in a test
+      // Use getCurrentIrisMdFilename for the default expectation before any setIrisMdFilename calls in a test
       const expectedFilePath = path.join(
         os.homedir(),
         '.gemini',
-        getCurrentGeminiMdFilename(), // This will be DEFAULT_CONTEXT_FILENAME unless changed by a test
+        getCurrentIrisMdFilename(), // This will be DEFAULT_CONTEXT_FILENAME unless changed by a test
       );
 
       // For this test, we expect the actual fs methods to be passed
@@ -308,7 +308,7 @@ describe('MemoryTool', () => {
       const memoryFilePath = path.join(
         os.homedir(),
         '.gemini',
-        getCurrentGeminiMdFilename(),
+        getCurrentIrisMdFilename(),
       );
 
       // Add the memory file to the allowlist
@@ -329,7 +329,7 @@ describe('MemoryTool', () => {
       const memoryFilePath = path.join(
         os.homedir(),
         '.gemini',
-        getCurrentGeminiMdFilename(),
+        getCurrentIrisMdFilename(),
       );
 
       const result = await memoryTool.shouldConfirmExecute(
@@ -358,7 +358,7 @@ describe('MemoryTool', () => {
       const memoryFilePath = path.join(
         os.homedir(),
         '.gemini',
-        getCurrentGeminiMdFilename(),
+        getCurrentIrisMdFilename(),
       );
 
       const result = await memoryTool.shouldConfirmExecute(

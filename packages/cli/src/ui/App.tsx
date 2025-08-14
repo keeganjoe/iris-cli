@@ -52,7 +52,7 @@ import process from 'node:process';
 import {
   getErrorMessage,
   type Config,
-  getAllGeminiMdFilenames,
+  getAllIrisMdFilenames,
   ApprovalMode,
   isEditorAvailable,
   EditorType,
@@ -61,7 +61,7 @@ import {
   AuthType,
   type IdeContext,
   ideContext,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 import {
   IdeIntegrationNudge,
   IdeIntegrationNudgeResult,
@@ -85,7 +85,7 @@ import {
   isProQuotaExceededError,
   isGenericQuotaExceededError,
   UserTierId,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 import { UpdateObject } from './utils/updateCheck.js';
 import ansiEscapes from 'ansi-escapes';
 import { OverflowProvider } from './contexts/OverflowContext.js';
@@ -759,7 +759,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     if (fromSettings) {
       return Array.isArray(fromSettings) ? fromSettings : [fromSettings];
     }
-    return getAllGeminiMdFilenames();
+    return getAllIrisMdFilenames();
   }, [settings.merged.contextFileName]);
 
   const initialPrompt = useMemo(() => config.getQuestion(), [config]);
@@ -898,7 +898,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
 
           {shouldShowIdePrompt ? (
             <IdeIntegrationNudge
-              question="Do you want to connect your VS Code editor to Gemini CLI?"
+              question="Do you want to connect your VS Code editor to Iris CLI?"
               description="If you select Yes, we'll install an extension that allows the CLI to access your open files and display diffs directly in VS Code."
               onComplete={handleIdePromptComplete}
             />

@@ -1,6 +1,6 @@
 # OpenAI Integration
 
-The Gemini CLI now supports OpenAI's GPT models as an alternative provider, giving you access to the full OpenAI model family while retaining all the powerful CLI tools and features.
+The Iris CLI now supports OpenAI's GPT models as an alternative provider, giving you access to the full OpenAI model family while retaining all the powerful CLI tools and features.
 
 ## Quick Start
 
@@ -105,7 +105,7 @@ If you encounter issues:
 ## Implementation Details
 
 ### Architecture
-The OpenAI integration uses a provider pattern that maps OpenAI API calls to the standard Gemini CLI interface. This ensures:
+The OpenAI integration uses a provider pattern that maps OpenAI API calls to the standard Iris CLI interface. This ensures:
 - Consistent behavior across providers  
 - All existing tools work without modification
 - Easy switching between providers

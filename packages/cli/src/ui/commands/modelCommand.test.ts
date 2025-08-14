@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { modelCommand } from './modelCommand.js';
 import { CommandContext } from './types.js';
 import { MessageType } from '../types.js';
-import { AuthType } from '@google/gemini-cli-core';
+import { AuthType } from 'iris-cli-core';
 
 describe('modelCommand', () => {
   let mockContext: CommandContext;

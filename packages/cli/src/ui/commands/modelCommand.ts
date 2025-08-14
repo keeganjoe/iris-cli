@@ -10,7 +10,7 @@ import {
   type SlashCommand,
   CommandKind,
 } from './types.js';
-import { AuthType } from '@google/gemini-cli-core';
+import { AuthType } from 'iris-cli-core';
 
 // Model definitions per provider
 const GEMINI_MODELS = [

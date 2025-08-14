@@ -8,7 +8,7 @@ import {
   Config,
   getErrorMessage,
   getMCPServerPrompts,
-} from '@google/gemini-cli-core';
+} from 'iris-cli-core';
 import {
   CommandContext,
   CommandKind,

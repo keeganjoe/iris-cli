@@ -15,12 +15,12 @@ import {
 } from 'vitest';
 import { ideCommand } from './ideCommand.js';
 import { type CommandContext } from './types.js';
-import { type Config, DetectedIde } from '@google/gemini-cli-core';
-import * as core from '@google/gemini-cli-core';
+import { type Config, DetectedIde } from 'iris-cli-core';
+import * as core from 'iris-cli-core';
 
 vi.mock('child_process');
 vi.mock('glob');
-vi.mock('@google/gemini-cli-core');
+vi.mock('iris-cli-core');
 
 describe('ideCommand', () => {
   let mockContext: CommandContext;
