@@ -20,9 +20,11 @@
     "dist"
   ],
   "dependencies": {
+    "@azure/identity": "^4.11.1",
+    "@azure/msal-node": "^3.7.1",
+    "@azure/openai": "^2.0.0",
     "@google/genai": "1.9.0",
     "@modelcontextprotocol/sdk": "^1.11.0",
-    "openai": "^4.67.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-logs-otlp-grpc": "^0.52.0",
     "@opentelemetry/exporter-metrics-otlp-grpc": "^0.52.0",
@@ -45,6 +47,7 @@
     "marked": "^15.0.12",
     "micromatch": "^4.0.8",
     "open": "^10.1.2",
+    "openai": "^4.67.1",
     "picomatch": "^4.0.1",
     "shell-quote": "^1.8.3",
     "simple-git": "^3.28.0",
@@ -53,13 +56,13 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "iris-cli-test-utils": "file:../test-utils",
     "@types/diff": "^7.0.2",
     "@types/dotenv": "^6.1.1",
     "@types/micromatch": "^4.0.8",
     "@types/minimatch": "^5.1.2",
     "@types/picomatch": "^4.0.1",
     "@types/ws": "^8.5.10",
+    "iris-cli-test-utils": "file:../test-utils",
     "typescript": "^5.3.3",
     "vitest": "^3.1.1"
   },

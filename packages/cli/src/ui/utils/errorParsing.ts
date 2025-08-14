@@ -7,6 +7,7 @@
 import {
   AuthType,
   DEFAULT_OPENAI_MODEL,
+  DEFAULT_AZURE_MODEL,
   isApiError,
   isStructuredError,
 } from 'iris-cli-core';
@@ -15,6 +16,11 @@ const getRateLimitErrorMessageOpenAI = (
   currentModel: string = DEFAULT_OPENAI_MODEL,
 ) =>
   `\nYou have reached your rate limit for ${currentModel}. Please wait and try again later, or check your OpenAI API usage limits.`;
+
+const getRateLimitErrorMessageAzure = (
+  currentModel: string = DEFAULT_AZURE_MODEL,
+) =>
+  `\nYou have reached your rate limit for ${currentModel} in Azure OpenAI. Please wait and try again later, or check your Azure OpenAI quota and usage limits in the Azure portal.`;
 
 const getRateLimitErrorMessageDefault = () =>
   '\nRate limit exceeded. Please wait and try again later.';
@@ -26,6 +32,9 @@ function getRateLimitMessage(
   switch (authType) {
     case AuthType.USE_OPENAI:
       return getRateLimitErrorMessageOpenAI(currentModel);
+    case AuthType.USE_AZURE:
+    case AuthType.LOGIN_WITH_AZURE:
+      return getRateLimitErrorMessageAzure(currentModel);
     default:
       return getRateLimitErrorMessageDefault();
   }

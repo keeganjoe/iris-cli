@@ -40,10 +40,12 @@ export function AuthDialog({
       return initialErrorMessage;
     }
 
-    if (
-      process.env.OPENAI_API_KEY
-    ) {
+    if (process.env.OPENAI_API_KEY) {
       return 'Existing API key detected (OPENAI_API_KEY). Select "OpenAI API Key" option to use it.';
+    }
+
+    if (process.env.AZURE_OPENAI_API_KEY) {
+      return 'Existing API key detected (AZURE_OPENAI_API_KEY). Select "Azure OpenAI API Key" option to use it.';
     }
     return null;
   });
@@ -51,6 +53,14 @@ export function AuthDialog({
     {
       label: 'Use OpenAI API Key',
       value: AuthType.USE_OPENAI,
+    },
+    {
+      label: 'Login with Azure',
+      value: AuthType.LOGIN_WITH_AZURE,
+    },
+    {
+      label: 'Use Azure OpenAI API Key',
+      value: AuthType.USE_AZURE,
     },
   ];
 

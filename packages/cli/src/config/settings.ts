@@ -64,6 +64,18 @@ export interface AccessibilitySettings {
   disableLoadingPhrases?: boolean;
 }
 
+export interface AzureSettings {
+  tenantId?: string;
+  subscriptionId?: string;
+  resourceGroup?: string;
+  openaiEndpoint?: string;
+  apiVersion?: string;
+  deployments?: {
+    chat?: string; // e.g., "gpt-4o-deployment"
+    embedding?: string;
+  };
+}
+
 export interface Settings {
   theme?: string;
   customThemes?: Record<string, CustomTheme>;
@@ -81,6 +93,7 @@ export interface Settings {
   showMemoryUsage?: boolean;
   contextFileName?: string | string[];
   accessibility?: AccessibilitySettings;
+  azure?: AzureSettings;
   telemetry?: TelemetrySettings;
   usageStatisticsEnabled?: boolean;
   preferredEditor?: string;

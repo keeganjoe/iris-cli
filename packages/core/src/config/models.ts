@@ -17,3 +17,11 @@ export const DEFAULT_OPENAI_O1_MODEL = 'o1-preview';
 export const DEFAULT_OPENAI_O1_MINI_MODEL = 'o1-mini';
 
 export const DEFAULT_OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
+
+// Azure OpenAI Models (using same model names as OpenAI, but deployed on Azure)
+export const DEFAULT_AZURE_MODEL = 'gpt-4o';
+export const DEFAULT_AZURE_MINI_MODEL = 'gpt-4o-mini';
+export const DEFAULT_AZURE_O1_MODEL = 'o1-preview';
+export const DEFAULT_AZURE_O1_MINI_MODEL = 'o1-mini';
+
+export const DEFAULT_AZURE_EMBEDDING_MODEL = 'text-embedding-3-small';

@@ -45,5 +45,27 @@ export const validateAuthMethod = (authMethod: string): string | null => {
     return null;
   }
 
+  if (authMethod === AuthType.LOGIN_WITH_AZURE) {
+    if (!process.env.AZURE_OPENAI_ENDPOINT) {
+      return (
+        'AZURE_OPENAI_ENDPOINT environment variable is required for Azure authentication.\n' +
+        'Set your Azure OpenAI endpoint (e.g., https://your-resource.openai.azure.com) and try again!\n\n' +
+        'Example:\n' +
+        'export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com"'
+      );
+    }
+    return null;
+  }
+
+  if (authMethod === AuthType.USE_AZURE) {
+    if (!process.env.AZURE_OPENAI_API_KEY) {
+      return 'AZURE_OPENAI_API_KEY environment variable not found. Add that to your environment and try again (no reload needed if using .env)!';
+    }
+    if (!process.env.AZURE_OPENAI_ENDPOINT) {
+      return 'AZURE_OPENAI_ENDPOINT environment variable not found. Add that to your environment and try again (no reload needed if using .env)!';
+    }
+    return null;
+  }
+
   return 'Invalid auth method selected.';
 };
