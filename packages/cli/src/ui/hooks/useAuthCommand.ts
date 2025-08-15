@@ -39,6 +39,8 @@ export const useAuthCommand = (
       try {
         setIsAuthenticating(true);
         await config.refreshAuth(authType);
+        // Set tools on the client after authentication
+        await config.getGeminiClient().setTools();
         console.log(`Authenticated via "${authType}".`);
       } catch (e) {
         setAuthError(`Failed to login. Message: ${getErrorMessage(e)}`);

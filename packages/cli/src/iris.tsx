@@ -216,6 +216,8 @@ export async function main() {
             throw new Error(err);
           }
           await config.refreshAuth(settings.merged.selectedAuthType);
+          // Set tools on the client after authentication
+          await config.getGeminiClient().setTools();
         } catch (err) {
           console.error('Error authenticating:', err);
           process.exit(1);

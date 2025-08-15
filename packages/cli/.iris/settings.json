@@ -1,0 +1,14 @@
+{
+  "selectedAuthType": "openai-api-key",
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": [
+        "@missionsquad/mcp-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your_github_token_here"
+      }
+    }
+  }
+}

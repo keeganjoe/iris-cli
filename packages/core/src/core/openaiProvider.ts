@@ -29,6 +29,7 @@ export class OpenAIProvider implements ContentGenerator {
   private client: OpenAI;
   private model: string;
   private toolCallIdMap: Map<string, string> = new Map(); // functionName -> toolCallId
+  private activeToolCalls: Map<string, string> = new Map(); // functionResponse.name+timestamp -> toolCallId
 
   constructor(apiKey: string, model: string, baseURL?: string) {
     this.client = new OpenAI({
@@ -233,14 +234,20 @@ export class OpenAIProvider implements ContentGenerator {
               textParts.push(part.text);
             } else if ('functionResponse' in part && part.functionResponse) {
               // Handle function responses (tool results)
-              // Get the tool call ID from our mapping, or use the function name as fallback
               const functionName = part.functionResponse.name || 'unknown';
-              const toolCallId = this.toolCallIdMap.get(functionName) || functionName;
-              toolResults.push({
-                tool_call_id: toolCallId,
-                role: 'tool',
-                content: JSON.stringify(part.functionResponse.response),
-              });
+              const toolCallId = this.toolCallIdMap.get(functionName);
+              
+              if (toolCallId) {
+                toolResults.push({
+                  tool_call_id: toolCallId,
+                  role: 'tool',
+                  content: JSON.stringify(part.functionResponse.response),
+                });
+                // Remove the used tool call ID to prevent reuse
+                this.toolCallIdMap.delete(functionName);
+              } else {
+                console.warn(`No tool call ID found for function: ${functionName}`);
+              }
             }
           }
         }
@@ -294,14 +301,37 @@ export class OpenAIProvider implements ContentGenerator {
   }
 
   private convertToOpenAITools(tools: any[]): OpenAI.Chat.Completions.ChatCompletionTool[] {
-    return tools.filter(tool => tool && typeof tool === 'object').map(tool => ({
-      type: 'function',
-      function: {
-        name: tool.functionDeclarations?.[0]?.name || 'unknown',
-        description: tool.functionDeclarations?.[0]?.description || '',
-        parameters: this.convertGeminiSchemaToOpenAI(tool.functionDeclarations?.[0]?.parameters || {}),
-      },
-    }));
+    const openaiTools: OpenAI.Chat.Completions.ChatCompletionTool[] = [];
+    
+    tools.filter(tool => tool && typeof tool === 'object').forEach(tool => {
+      if (tool.functionDeclarations && Array.isArray(tool.functionDeclarations)) {
+        // Handle Gemini format: one tool with multiple function declarations
+        tool.functionDeclarations.forEach((funcDecl: any) => {
+          if (funcDecl && funcDecl.name) {
+            openaiTools.push({
+              type: 'function',
+              function: {
+                name: funcDecl.name,
+                description: funcDecl.description || '',
+                parameters: this.convertGeminiSchemaToOpenAI(funcDecl.parameters || {}),
+              },
+            });
+          }
+        });
+      } else if (tool.name) {
+        // Handle individual function declaration format
+        openaiTools.push({
+          type: 'function',
+          function: {
+            name: tool.name,
+            description: tool.description || '',
+            parameters: this.convertGeminiSchemaToOpenAI(tool.parameters || {}),
+          },
+        });
+      }
+    });
+    
+    return openaiTools;
   }
 
   private convertGeminiSchemaToOpenAI(geminiSchema: any): any {
@@ -352,6 +382,17 @@ export class OpenAIProvider implements ContentGenerator {
       // Handle items (for array types)
       if (result.items) {
         result.items = convertSchema(result.items);
+      }
+
+      // Convert string numeric constraints to numbers for OpenAI
+      const numericConstraints = ['minLength', 'maxLength', 'minItems', 'maxItems', 'minimum', 'maximum'];
+      for (const constraint of numericConstraints) {
+        if (result[constraint] !== undefined) {
+          const value = result[constraint];
+          if (typeof value === 'string' && !isNaN(Number(value))) {
+            result[constraint] = Number(value);
+          }
+        }
       }
 
       return result;

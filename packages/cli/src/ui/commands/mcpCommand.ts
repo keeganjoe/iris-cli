@@ -44,6 +44,7 @@ const getMcpStatus = async (
     };
   }
 
+
   const toolRegistry = await config.getToolRegistry();
   if (!toolRegistry) {
     return {

@@ -386,6 +386,9 @@ export class Config {
     this.contentGeneratorConfig = newContentGeneratorConfig;
     this.geminiClient = newGeminiClient;
 
+    // Set tools on the new client
+    await this.geminiClient.setTools();
+
     // Restore the conversation history to the new client
     if (existingHistory.length > 0) {
       this.geminiClient.setHistory(existingHistory);
@@ -432,6 +435,9 @@ export class Config {
     // Only assign to instance properties after successful initialization
     this.contentGeneratorConfig = newContentGeneratorConfig;
     this.geminiClient = newGeminiClient;
+
+    // Set tools on the new client
+    await this.geminiClient.setTools();
 
     // Restore the conversation history to the new client
     if (existingHistory.length > 0) {
