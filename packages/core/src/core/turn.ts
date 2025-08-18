@@ -24,7 +24,7 @@ import {
   UnauthorizedError,
   toFriendlyError,
 } from '../utils/errors.js';
-import { GeminiChat } from './geminiChat.js';
+import { GeminiChat } from './aiChat.js';
 
 // Define a structure for tools passed to the server
 export interface ServerTool {
@@ -53,6 +53,21 @@ export enum GeminiEventType {
   MaxSessionTurns = 'max_session_turns',
   Finished = 'finished',
   LoopDetected = 'loop_detected',
+  // ReAct-specific events
+  ReActCycleStarted = 'react_cycle_started',
+  ReActThought = 'react_thought',
+  ReActAction = 'react_action',
+  ReActObservation = 'react_observation',
+  ReActReflection = 'react_reflection',
+  ReActCycleCompleted = 'react_cycle_completed',
+  // Planning-specific events
+  PlanCreated = 'plan_created',
+  PlanValidated = 'plan_validated',
+  PlanExecutionStarted = 'plan_execution_started',
+  StepStarted = 'step_started',
+  StepCompleted = 'step_completed',
+  StepFailed = 'step_failed',
+  PlanExecutionCompleted = 'plan_execution_completed',
 }
 
 export interface StructuredError {
@@ -147,6 +162,131 @@ export type ServerGeminiLoopDetectedEvent = {
   type: GeminiEventType.LoopDetected;
 };
 
+// ReAct-specific event types
+export interface ReActCycleInfo {
+  sessionId: string;
+  cycleId: string;
+  cycleIndex: number;
+  status: string;
+}
+
+export interface ReActThoughtInfo {
+  sessionId: string;
+  cycleId: string;
+  thought: string;
+  confidence?: number;
+}
+
+export interface ReActActionInfo {
+  sessionId: string;
+  cycleId: string;
+  action: ToolCallRequestInfo | null;
+  reasoning: string;
+}
+
+export interface ReActObservationInfo {
+  sessionId: string;
+  cycleId: string;
+  observation: string;
+  success: boolean;
+}
+
+export interface ReActReflectionInfo {
+  sessionId: string;
+  cycleId: string;
+  reflection: string;
+  lessons: string[];
+}
+
+export interface PlanInfo {
+  planId: string;
+  goal: string;
+  totalSteps: number;
+  estimatedTime: string;
+  complexity: 'low' | 'medium' | 'high';
+}
+
+export interface StepInfo {
+  planId: string;
+  stepId: string;
+  description: string;
+  tools: string[];
+  status: 'pending' | 'executing' | 'completed' | 'failed' | 'skipped';
+}
+
+export interface PlanExecutionInfo {
+  planId: string;
+  completedSteps: number;
+  totalSteps: number;
+  successRate: number;
+  errors: number;
+}
+
+export type ServerGeminiReActCycleStartedEvent = {
+  type: GeminiEventType.ReActCycleStarted;
+  value: ReActCycleInfo;
+};
+
+export type ServerGeminiReActThoughtEvent = {
+  type: GeminiEventType.ReActThought;
+  value: ReActThoughtInfo;
+};
+
+export type ServerGeminiReActActionEvent = {
+  type: GeminiEventType.ReActAction;
+  value: ReActActionInfo;
+};
+
+export type ServerGeminiReActObservationEvent = {
+  type: GeminiEventType.ReActObservation;
+  value: ReActObservationInfo;
+};
+
+export type ServerGeminiReActReflectionEvent = {
+  type: GeminiEventType.ReActReflection;
+  value: ReActReflectionInfo;
+};
+
+export type ServerGeminiReActCycleCompletedEvent = {
+  type: GeminiEventType.ReActCycleCompleted;
+  value: ReActCycleInfo;
+};
+
+export type ServerGeminiPlanCreatedEvent = {
+  type: GeminiEventType.PlanCreated;
+  value: PlanInfo;
+};
+
+export type ServerGeminiPlanValidatedEvent = {
+  type: GeminiEventType.PlanValidated;
+  value: PlanInfo;
+};
+
+export type ServerGeminiPlanExecutionStartedEvent = {
+  type: GeminiEventType.PlanExecutionStarted;
+  value: PlanInfo;
+};
+
+export type ServerGeminiStepStartedEvent = {
+  type: GeminiEventType.StepStarted;
+  value: StepInfo;
+};
+
+export type ServerGeminiStepCompletedEvent = {
+  type: GeminiEventType.StepCompleted;
+  value: StepInfo;
+};
+
+export type ServerGeminiStepFailedEvent = {
+  type: GeminiEventType.StepFailed;
+  value: StepInfo;
+};
+
+export type ServerGeminiPlanExecutionCompletedEvent = {
+  type: GeminiEventType.PlanExecutionCompleted;
+  value: PlanExecutionInfo;
+};
+
 // The original union type, now composed of the individual types
 export type ServerGeminiStreamEvent =
   | ServerGeminiContentEvent
@@ -159,7 +299,20 @@ export type ServerGeminiStreamEvent =
   | ServerGeminiThoughtEvent
   | ServerGeminiMaxSessionTurnsEvent
   | ServerGeminiFinishedEvent
-  | ServerGeminiLoopDetectedEvent;
+  | ServerGeminiLoopDetectedEvent
+  | ServerGeminiReActCycleStartedEvent
+  | ServerGeminiReActThoughtEvent
+  | ServerGeminiReActActionEvent
+  | ServerGeminiReActObservationEvent
+  | ServerGeminiReActReflectionEvent
+  | ServerGeminiReActCycleCompletedEvent
+  | ServerGeminiPlanCreatedEvent
+  | ServerGeminiPlanValidatedEvent
+  | ServerGeminiPlanExecutionStartedEvent
+  | ServerGeminiStepStartedEvent
+  | ServerGeminiStepCompletedEvent
+  | ServerGeminiStepFailedEvent
+  | ServerGeminiPlanExecutionCompletedEvent;
 
 // A turn manages the agentic loop turn within the server context.
 export class Turn {

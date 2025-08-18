@@ -135,6 +135,35 @@ export type HistoryItemCompression = HistoryItemBase & {
   compression: CompressionProps;
 };
 
+// ReAct-specific types for UI display
+export interface ReActCycleDisplay {
+  id: string;
+  cycleIndex: number;
+  status: 'thinking' | 'acting' | 'observing' | 'reflecting' | 'completed' | 'failed';
+  thought?: string;
+  action?: {
+    name: string;
+    args: Record<string, any>;
+    reasoning?: string;
+  };
+  observation?: string;
+  reflection?: string;
+  confidence?: number;
+  timestamp: Date;
+  duration?: number;
+}
+
+export type HistoryItemReAct = HistoryItemBase & {
+  type: 'react_cycle';
+  sessionId: string;
+  cycles: ReActCycleDisplay[];
+  currentCycle?: ReActCycleDisplay;
+  goal: string;
+  status: 'active' | 'completed' | 'failed';
+  totalDuration?: number;
+  finalResult?: string;
+};
+
 // Using Omit<HistoryItem, 'id'> seems to have some issues with typescript's
 // type inference e.g. historyItem.type === 'tool_group' isn't auto-inferring that
 // 'tools' in historyItem.
@@ -153,7 +182,8 @@ export type HistoryItemWithoutId =
   | HistoryItemModelStats
   | HistoryItemToolStats
   | HistoryItemQuit
-  | HistoryItemCompression;
+  | HistoryItemCompression
+  | HistoryItemReAct;
 
 export type HistoryItem = HistoryItemWithoutId & { id: number };
 

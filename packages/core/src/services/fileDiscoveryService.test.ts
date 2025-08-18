@@ -57,8 +57,8 @@ describe('FileDiscoveryService', () => {
       await createTestFile('.geminiignore', 'secrets.txt');
       const service = new FileDiscoveryService(projectRoot);
 
-      expect(service.shouldGeminiIgnoreFile('secrets.txt')).toBe(true);
-      expect(service.shouldGeminiIgnoreFile('src/index.js')).toBe(false);
+      expect(service.shouldIrisIgnoreFile('secrets.txt')).toBe(true);
+      expect(service.shouldIrisIgnoreFile('src/index.js')).toBe(false);
     });
   });
 
@@ -98,7 +98,7 @@ describe('FileDiscoveryService', () => {
 
       const filtered = service.filterFiles(files, {
         respectGitIgnore: false,
-        respectGeminiIgnore: true, // still respect this one
+        respectIrisIgnore: true, // still respect this one
       });
 
       expect(filtered).toEqual(
@@ -108,7 +108,7 @@ describe('FileDiscoveryService', () => {
       );
     });
 
-    it('should not filter files when respectGeminiIgnore is false', () => {
+    it('should not filter files when respectIrisIgnore is false', () => {
       const files = [
         'src/index.ts',
         'node_modules/package/index.js',
@@ -119,7 +119,7 @@ describe('FileDiscoveryService', () => {
 
       const filtered = service.filterFiles(files, {
         respectGitIgnore: true,
-        respectGeminiIgnore: false,
+        respectIrisIgnore: false,
       });
 
       expect(filtered).toEqual(
@@ -136,7 +136,7 @@ describe('FileDiscoveryService', () => {
     });
   });
 
-  describe('shouldGitIgnoreFile & shouldGeminiIgnoreFile', () => {
+  describe('shouldGitIgnoreFile & shouldIrisIgnoreFile', () => {
     beforeEach(async () => {
       await fs.mkdir(path.join(projectRoot, '.git'));
       await createTestFile('.gitignore', 'node_modules/');
@@ -165,7 +165,7 @@ describe('FileDiscoveryService', () => {
       const service = new FileDiscoveryService(projectRoot);
 
       expect(
-        service.shouldGeminiIgnoreFile(path.join(projectRoot, 'debug.log')),
+        service.shouldIrisIgnoreFile(path.join(projectRoot, 'debug.log')),
       ).toBe(true);
     });
 
@@ -173,7 +173,7 @@ describe('FileDiscoveryService', () => {
       const service = new FileDiscoveryService(projectRoot);
 
       expect(
-        service.shouldGeminiIgnoreFile(path.join(projectRoot, 'src/index.ts')),
+        service.shouldIrisIgnoreFile(path.join(projectRoot, 'src/index.ts')),
       ).toBe(false);
     });
   });

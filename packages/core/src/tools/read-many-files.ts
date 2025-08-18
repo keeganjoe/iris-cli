@@ -251,7 +251,7 @@ Use this tool when the user's query implies needing the content of several files
     const paramUseDefaultExcludes = params.useDefaultExcludes !== false;
     const geminiIgnorePatterns = this.config
       .getFileService()
-      .getGeminiIgnorePatterns();
+      .getIrisIgnorePatterns();
     const finalExclusionPatternsForDescription: string[] =
       paramUseDefaultExcludes
         ? [...DEFAULT_EXCLUDES, ...paramExcludes, ...geminiIgnorePatterns]
@@ -298,9 +298,9 @@ Use this tool when the user's query implies needing the content of several files
       respectGitIgnore:
         params.file_filtering_options?.respect_git_ignore ??
         defaultFileIgnores.respectGitIgnore, // Use the property from the returned object
-      respectGeminiIgnore:
+      respectIrisIgnore:
         params.file_filtering_options?.respect_gemini_ignore ??
-        defaultFileIgnores.respectGeminiIgnore, // Use the property from the returned object
+        defaultFileIgnores.respectIrisIgnore, // Use the property from the returned object
     };
     // Get centralized file discovery service
     const fileDiscovery = this.config.getFileService();
@@ -351,14 +351,14 @@ Use this tool when the user's query implies needing the content of several files
               entries.map((p) => path.relative(this.config.getTargetDir(), p)),
               {
                 respectGitIgnore: true,
-                respectGeminiIgnore: false,
+                respectIrisIgnore: false,
               },
             )
             .map((p) => path.resolve(this.config.getTargetDir(), p))
         : entries;
 
       // Apply gemini ignore filtering if enabled
-      const finalFilteredEntries = fileFilteringOptions.respectGeminiIgnore
+      const finalFilteredEntries = fileFilteringOptions.respectIrisIgnore
         ? fileDiscovery
             .filterFiles(
               gitFilteredEntries.map((p) =>
@@ -366,7 +366,7 @@ Use this tool when the user's query implies needing the content of several files
               ),
               {
                 respectGitIgnore: false,
-                respectGeminiIgnore: true,
+                respectIrisIgnore: true,
               },
             )
             .map((p) => path.resolve(this.config.getTargetDir(), p))
@@ -400,7 +400,7 @@ Use this tool when the user's query implies needing the content of several files
 
         // Check if this file was filtered out by gemini ignore
         if (
-          fileFilteringOptions.respectGeminiIgnore &&
+          fileFilteringOptions.respectIrisIgnore &&
           !finalFilteredEntries.includes(absoluteFilePath)
         ) {
           geminiIgnoredCount++;

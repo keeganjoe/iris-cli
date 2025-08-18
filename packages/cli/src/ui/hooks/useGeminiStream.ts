@@ -100,6 +100,17 @@ export const useGeminiStream = (
   const turnCancelledRef = useRef(false);
   const [isResponding, setIsResponding] = useState<boolean>(false);
   const [thought, setThought] = useState<ThoughtSummary | null>(null);
+  const [reActState, setReActState] = useState<{
+    isActive: boolean;
+    currentCycle: any | null;
+    cycles: any[];
+    sessionId: string | null;
+  }>({
+    isActive: false,
+    currentCycle: null,
+    cycles: [],
+    sessionId: null,
+  });
   const [pendingHistoryItemRef, setPendingHistoryItem] =
     useStateAndRef<HistoryItemWithoutId | null>(null);
   const processedMemoryToolsRef = useRef<Set<string>>(new Set());
@@ -111,6 +122,7 @@ export const useGeminiStream = (
     }
     return new GitService(config.getProjectRoot());
   }, [config]);
+
 
   const [toolCalls, scheduleToolCalls, markToolsAsSubmitted] =
     useReactToolScheduler(
@@ -272,6 +284,95 @@ export const useGeminiStream = (
                 `Unhandled slash command result type: ${unreachable}`,
               );
             }
+          }
+        }
+
+        // Handle ReAct mode processing
+        const reActService = geminiClient.getReActService();
+        if (reActService && config.getReActEnabled()) {
+          // Set up event emitter when ReAct service is accessed
+          reActService.setEventEmitter((event: any) => {
+            // Handle ReAct events directly in the UI
+            const timestamp = Date.now();
+            switch (event.type) {
+              case ServerGeminiEventType.ReActCycleStarted:
+                handleReActCycleStarted(event.value, timestamp);
+                break;
+              case ServerGeminiEventType.ReActThought:
+                handleReActThought(event.value, timestamp);
+                break;
+              case ServerGeminiEventType.ReActAction:
+                handleReActAction(event.value, timestamp);
+                break;
+              case ServerGeminiEventType.ReActObservation:
+                handleReActObservation(event.value, timestamp);
+                break;
+              case ServerGeminiEventType.ReActReflection:
+                handleReActReflection(event.value, timestamp);
+                break;
+              case ServerGeminiEventType.ReActCycleCompleted:
+                handleReActCycleCompleted(event.value, timestamp);
+                break;
+            }
+          });
+
+          try {
+            const reActResult = await reActService.processQuery(trimmedQuery);
+            // ReAct always returns shouldProceedWithNormalFlow: true now
+            // If it processed the query, use the generated summary
+            if (reActResult.processedQuery && reActResult.processedQuery !== trimmedQuery) {
+              localQueryToSendToGemini = reActResult.processedQuery;
+            }
+          } catch (error) {
+            onDebugMessage(`ReAct processing error: ${error instanceof Error ? error.message : String(error)}`);
+            // Continue with normal flow if ReAct fails
+          }
+        }
+
+        // Handle automatic planning mode processing (use original trimmed query for analysis)
+        if (config.getPlannerEnabled() && typeof query === 'string') {
+          try {
+            // Check if this query would benefit from structured planning
+            const planningTriggers = [
+              'implement',
+              'create',
+              'build',
+              'develop',
+              'setup',
+              'configure',
+              'refactor',
+              'optimize',
+              'fix',
+              'debug',
+              'add feature',
+              'write tests',
+              'deploy',
+              'migrate',
+            ];
+
+            const shouldUsePlanning = planningTriggers.some(trigger =>
+              trimmedQuery.toLowerCase().includes(trigger)
+            ) || trimmedQuery.length > 50; // Longer queries likely benefit from planning
+
+            if (shouldUsePlanning) {
+              // Add visual indicator that planning mode is being considered
+              addItem({
+                type: MessageType.INFO,
+                text: '📋 **Planning Mode Detected** - Analyzing task for structured planning...',
+              }, userMessageTimestamp);
+              
+              // TODO: Integrate TaskPlanner here for automatic plan creation
+              onDebugMessage(`Planning mode activated for: ${trimmedQuery.substring(0, 50)}...`);
+              
+              // For now, add note that planning integration is coming
+              addItem({
+                type: MessageType.INFO,
+                text: '⚠️ *Planning integration in progress - proceeding with enhanced processing*',
+              }, userMessageTimestamp);
+            }
+          } catch (error) {
+            onDebugMessage(`Planning processing error: ${error instanceof Error ? error.message : String(error)}`);
+            // Continue with normal flow if planning fails
           }
         }
 
@@ -523,6 +624,157 @@ export const useGeminiStream = (
     );
   }, [addItem]);
 
+  // ReAct session state for collapsed display
+  const reActSessionRef = useRef<{
+    sessionId: string | null;
+    cycles: Array<{
+      thought: string;
+      action: any;
+      observation: string;
+      reflection: string;
+    }>;
+    startTime: number;
+    currentCycleIndex: number;
+  }>({
+    sessionId: null,
+    cycles: [],
+    startTime: 0,
+    currentCycleIndex: 0,
+  });
+
+  // ReAct event handlers
+  const handleReActCycleStarted = useCallback((eventValue: any, userMessageTimestamp: number) => {
+    setReActState(prev => ({
+      ...prev,
+      isActive: true,
+      sessionId: eventValue.sessionId,
+      currentCycle: {
+        id: eventValue.cycleId,
+        status: eventValue.status,
+        startTime: Date.now(),
+      },
+    }));
+
+    // Initialize session tracking on first cycle
+    if (eventValue.cycleIndex === 0) {
+      reActSessionRef.current = {
+        sessionId: eventValue.sessionId,
+        cycles: [],
+        startTime: Date.now(),
+        currentCycleIndex: 0,
+      };
+      
+      addItem(
+        {
+          type: 'info',
+          text: `⏺ **ReAct Analysis**\n  ⎿  Processing step-by-step reasoning... (ctrl+r to expand)`,
+        },
+        userMessageTimestamp,
+      );
+    }
+
+    // Prepare new cycle object
+    reActSessionRef.current.cycles[eventValue.cycleIndex] = {
+      thought: '',
+      action: null,
+      observation: '',
+      reflection: '',
+    };
+    reActSessionRef.current.currentCycleIndex = eventValue.cycleIndex;
+  }, [addItem]);
+
+  const handleReActThought = useCallback((eventValue: any, userMessageTimestamp: number) => {
+    setReActState(prev => ({
+      ...prev,
+      currentCycle: prev.currentCycle ? {
+        ...prev.currentCycle,
+        thought: eventValue.thought,
+        confidence: eventValue.confidence,
+      } : null,
+    }));
+
+    // Store thought in session data instead of displaying immediately
+    if (reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex]) {
+      reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex].thought = eventValue.thought;
+    }
+  }, []);
+
+  const handleReActAction = useCallback((eventValue: any, userMessageTimestamp: number) => {
+    setReActState(prev => ({
+      ...prev,
+      currentCycle: prev.currentCycle ? {
+        ...prev.currentCycle,
+        action: eventValue.action,
+        reasoning: eventValue.reasoning,
+      } : null,
+    }));
+
+    // Store action in session data instead of displaying immediately
+    if (reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex]) {
+      reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex].action = eventValue.action;
+    }
+  }, []);
+
+  const handleReActObservation = useCallback((eventValue: any, userMessageTimestamp: number) => {
+    setReActState(prev => ({
+      ...prev,
+      currentCycle: prev.currentCycle ? {
+        ...prev.currentCycle,
+        observation: eventValue.observation,
+        success: eventValue.success,
+      } : null,
+    }));
+
+    // Store observation in session data instead of displaying immediately
+    if (reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex]) {
+      reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex].observation = eventValue.observation;
+    }
+  }, []);
+
+  const handleReActReflection = useCallback((eventValue: any, userMessageTimestamp: number) => {
+    setReActState(prev => ({
+      ...prev,
+      currentCycle: prev.currentCycle ? {
+        ...prev.currentCycle,
+        reflection: eventValue.reflection,
+        lessons: eventValue.lessons,
+      } : null,
+    }));
+
+    // Store reflection in session data instead of displaying immediately
+    if (reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex]) {
+      reActSessionRef.current.cycles[reActSessionRef.current.currentCycleIndex].reflection = eventValue.reflection;
+    }
+  }, []);
+
+  const handleReActCycleCompleted = useCallback((eventValue: any, userMessageTimestamp: number) => {
+    setReActState(prev => {
+      const completedCycle = { ...prev.currentCycle, status: eventValue.status };
+      return {
+        ...prev,
+        cycles: [...prev.cycles, completedCycle],
+        currentCycle: null,
+        isActive: eventValue.status !== 'completed',
+      };
+    });
+
+    // When the session is complete, show collapsed summary
+    if (eventValue.status === 'completed') {
+      const totalCycles = reActSessionRef.current.cycles.length;
+      const duration = Date.now() - reActSessionRef.current.startTime;
+      const durationSec = Math.round(duration / 1000);
+      
+      addItem(
+        {
+          type: 'info',
+          text: `⏺ **ReAct Analysis Complete**\n  ⎿  Completed ${totalCycles} reasoning cycles in ${durationSec}s (ctrl+r to expand)`,
+        },
+        userMessageTimestamp,
+      );
+    }
+  }, [addItem]);
+
+
   const processGeminiStreamEvents = useCallback(
     async (
       stream: AsyncIterable<GeminiEvent>,
@@ -573,6 +825,52 @@ export const useGeminiStream = (
             // before we add loop detected message to history
             loopDetectedRef.current = true;
             break;
+          case ServerGeminiEventType.ReActCycleStarted:
+            handleReActCycleStarted(event.value, userMessageTimestamp);
+            break;
+          case ServerGeminiEventType.ReActThought:
+            handleReActThought(event.value, userMessageTimestamp);
+            break;
+          case ServerGeminiEventType.ReActAction:
+            handleReActAction(event.value, userMessageTimestamp);
+            break;
+          case ServerGeminiEventType.ReActObservation:
+            handleReActObservation(event.value, userMessageTimestamp);
+            break;
+          case ServerGeminiEventType.ReActReflection:
+            handleReActReflection(event.value, userMessageTimestamp);
+            break;
+          case ServerGeminiEventType.ReActCycleCompleted:
+            handleReActCycleCompleted(event.value, userMessageTimestamp);
+            break;
+          case ServerGeminiEventType.PlanCreated:
+            // TODO: Handle plan created event
+            console.log('Plan created:', event.value);
+            break;
+          case ServerGeminiEventType.PlanValidated:
+            // TODO: Handle plan validated event
+            console.log('Plan validated:', event.value);
+            break;
+          case ServerGeminiEventType.PlanExecutionStarted:
+            // TODO: Handle plan execution started event
+            console.log('Plan execution started:', event.value);
+            break;
+          case ServerGeminiEventType.StepStarted:
+            // TODO: Handle step started event
+            console.log('Step started:', event.value);
+            break;
+          case ServerGeminiEventType.StepCompleted:
+            // TODO: Handle step completed event
+            console.log('Step completed:', event.value);
+            break;
+          case ServerGeminiEventType.StepFailed:
+            // TODO: Handle step failed event
+            console.log('Step failed:', event.value);
+            break;
+          case ServerGeminiEventType.PlanExecutionCompleted:
+            // TODO: Handle plan execution completed event
+            console.log('Plan execution completed:', event.value);
+            break;
           default: {
             // enforces exhaustive switch-case
             const unreachable: never = event;
@@ -593,6 +891,12 @@ export const useGeminiStream = (
       handleChatCompressionEvent,
       handleFinishedEvent,
       handleMaxSessionTurnsEvent,
+      handleReActCycleStarted,
+      handleReActThought,
+      handleReActAction,
+      handleReActObservation,
+      handleReActReflection,
+      handleReActCycleCompleted,
     ],
   );
 
@@ -758,6 +1062,9 @@ export const useGeminiStream = (
           processedMemoryToolsRef.current.add(t.request.callId),
         );
       }
+
+      // ReAct tool processing is now handled internally by ReActServiceAI
+      // during its processing cycles, so no external processing needed here
 
       const geminiTools = completedAndReadyToSubmitTools.filter(
         (t) => !t.request.isClientInitiated,
@@ -949,5 +1256,6 @@ export const useGeminiStream = (
     initError,
     pendingHistoryItems,
     thought,
+    reActState,
   };
 };

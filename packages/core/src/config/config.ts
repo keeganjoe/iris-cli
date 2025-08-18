@@ -40,6 +40,8 @@ import {
   StartSessionEvent,
 } from '../telemetry/index.js';
 import {
+  DEFAULT_EMBEDDING_MODEL,
+  DEFAULT_FLASH_MODEL,
   DEFAULT_GEMINI_EMBEDDING_MODEL,
   DEFAULT_GEMINI_FLASH_MODEL,
 } from './models.js';
@@ -85,6 +87,37 @@ export interface TelemetrySettings {
   outfile?: string;
 }
 
+export interface ReActSettings {
+  enabled?: boolean;
+  maxCycles?: number;
+  thinkingTimeout?: number;
+  showInternalThoughts?: boolean;
+  autoReflection?: boolean;
+  confidenceThreshold?: number;
+  enableParallelActions?: boolean;
+  displaySettings?: {
+    showThoughts?: boolean;
+    showActions?: boolean;
+    showObservations?: boolean;
+    showReflections?: boolean;
+    animateTransitions?: boolean;
+  };
+}
+
+export interface PlannerSettings {
+  enabled?: boolean;
+  maxSteps?: number;
+  maxDependencyDepth?: number;
+  defaultEstimation?: string;
+  enableParallelExecution?: boolean;
+  autoRetryFailedSteps?: boolean;
+  maxRetries?: number;
+  stepTimeout?: number;
+  enableOptimization?: boolean;
+  preferredToolOrder?: string[];
+  contextInheritance?: boolean;
+}
+
 export interface GeminiCLIExtension {
   name: string;
   version: string;
@@ -93,17 +126,17 @@ export interface GeminiCLIExtension {
 }
 export interface FileFilteringOptions {
   respectGitIgnore: boolean;
-  respectGeminiIgnore: boolean;
+  respectIrisIgnore: boolean;
 }
 // For memory files
 export const DEFAULT_MEMORY_FILE_FILTERING_OPTIONS: FileFilteringOptions = {
   respectGitIgnore: false,
-  respectGeminiIgnore: true,
+  respectIrisIgnore: true,
 };
 // For all other files
 export const DEFAULT_FILE_FILTERING_OPTIONS: FileFilteringOptions = {
   respectGitIgnore: true,
-  respectGeminiIgnore: true,
+  respectIrisIgnore: true,
 };
 export class MCPServerConfig {
   constructor(
@@ -173,7 +206,7 @@ export interface ConfigParameters {
   usageStatisticsEnabled?: boolean;
   fileFiltering?: {
     respectGitIgnore?: boolean;
-    respectGeminiIgnore?: boolean;
+    respectIrisIgnore?: boolean;
     enableRecursiveFileSearch?: boolean;
   };
   checkpointing?: boolean;
@@ -197,6 +230,8 @@ export interface ConfigParameters {
   ideMode?: boolean;
   loadMemoryFromIncludeDirectories?: boolean;
   chatCompression?: ChatCompressionSettings;
+  react?: ReActSettings;
+  planner?: PlannerSettings;
   interactive?: boolean;
 }
 
@@ -228,7 +263,7 @@ export class Config {
   private geminiClient!: GeminiClient;
   private readonly fileFiltering: {
     respectGitIgnore: boolean;
-    respectGeminiIgnore: boolean;
+    respectIrisIgnore: boolean;
     enableRecursiveFileSearch: boolean;
   };
   private fileDiscoveryService: FileDiscoveryService | null = null;
@@ -261,13 +296,15 @@ export class Config {
   private readonly experimentalAcp: boolean = false;
   private readonly loadMemoryFromIncludeDirectories: boolean = false;
   private readonly chatCompression: ChatCompressionSettings | undefined;
+  private react: ReActSettings | undefined;
+  private planner: PlannerSettings | undefined;
   private readonly interactive: boolean;
   private initialized: boolean = false;
 
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId;
     this.embeddingModel =
-      params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
+      params.embeddingModel ?? DEFAULT_EMBEDDING_MODEL;
     this.sandbox = params.sandbox;
     this.targetDir = path.resolve(params.targetDir);
     this.workspaceContext = new WorkspaceContext(
@@ -299,7 +336,7 @@ export class Config {
 
     this.fileFiltering = {
       respectGitIgnore: params.fileFiltering?.respectGitIgnore ?? true,
-      respectGeminiIgnore: params.fileFiltering?.respectGeminiIgnore ?? true,
+      respectIrisIgnore: params.fileFiltering?.respectIrisIgnore ?? true,
       enableRecursiveFileSearch:
         params.fileFiltering?.enableRecursiveFileSearch ?? true,
     };
@@ -329,6 +366,8 @@ export class Config {
     this.loadMemoryFromIncludeDirectories =
       params.loadMemoryFromIncludeDirectories ?? false;
     this.chatCompression = params.chatCompression;
+    this.react = params.react;
+    this.planner = params.planner;
     this.interactive = params.interactive ?? false;
 
     if (params.contextFileName) {
@@ -617,14 +656,14 @@ export class Config {
   getFileFilteringRespectGitIgnore(): boolean {
     return this.fileFiltering.respectGitIgnore;
   }
-  getFileFilteringRespectGeminiIgnore(): boolean {
-    return this.fileFiltering.respectGeminiIgnore;
+  getFileFilteringRespectIrisIgnore(): boolean {
+    return this.fileFiltering.respectIrisIgnore;
   }
 
   getFileFilteringOptions(): FileFilteringOptions {
     return {
       respectGitIgnore: this.fileFiltering.respectGitIgnore,
-      respectGeminiIgnore: this.fileFiltering.respectGeminiIgnore,
+      respectIrisIgnore: this.fileFiltering.respectIrisIgnore,
     };
   }
 
@@ -727,6 +766,57 @@ export class Config {
     return this.chatCompression;
   }
 
+  getReActSettings(): ReActSettings {
+    return this.react || {
+      enabled: false,
+      maxCycles: 5,
+      thinkingTimeout: 30000,
+      showInternalThoughts: true,
+      autoReflection: true,
+      confidenceThreshold: 0.7,
+      enableParallelActions: false,
+      displaySettings: {
+        showThoughts: true,
+        showActions: true,
+        showObservations: true,
+        showReflections: true,
+        animateTransitions: true,
+      },
+    };
+  }
+
+  getReActEnabled(): boolean {
+    return this.getReActSettings().enabled || false;
+  }
+
+  setReActSettings(settings: ReActSettings): void {
+    this.react = settings;
+  }
+
+  getPlannerSettings(): PlannerSettings {
+    return this.planner || {
+      enabled: false,
+      maxSteps: 20,
+      maxDependencyDepth: 5,
+      defaultEstimation: '10-15 minutes',
+      enableParallelExecution: true,
+      autoRetryFailedSteps: true,
+      maxRetries: 3,
+      stepTimeout: 300000, // 5 minutes
+      enableOptimization: true,
+      preferredToolOrder: ['read_file', 'search_text', 'write_file', 'edit_file', 'shell'],
+      contextInheritance: true,
+    };
+  }
+
+  getPlannerEnabled(): boolean {
+    return this.getPlannerSettings().enabled || false;
+  }
+
+  setPlannerSettings(settings: PlannerSettings): void {
+    this.planner = settings;
+  }
+
   isInteractive(): boolean {
     return this.interactive;
   }
@@ -792,4 +882,4 @@ export class Config {
   }
 }
 // Export model constants for use in CLI
-export { DEFAULT_GEMINI_FLASH_MODEL };
+export { DEFAULT_FLASH_MODEL, DEFAULT_GEMINI_FLASH_MODEL };

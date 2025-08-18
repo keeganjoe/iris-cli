@@ -54,7 +54,7 @@ describe('handleAtCommand', () => {
       getFileFilteringRespectGeminiIgnore: () => true,
       getFileFilteringOptions: () => ({
         respectGitIgnore: true,
-        respectGeminiIgnore: true,
+        respectIrisIgnore: true,
       }),
       getEnableRecursiveFileSearch: vi.fn(() => true),
       getWorkspaceContext: () => ({

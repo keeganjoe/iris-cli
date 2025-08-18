@@ -10,14 +10,20 @@ export * from './config/config.js';
 // Export Core Logic
 export * from './core/client.js';
 export * from './core/contentGenerator.js';
-export * from './core/geminiChat.js';
+export * from './core/aiChat.js';
 export * from './core/logger.js';
 export * from './core/prompts.js';
 export * from './core/tokenLimits.js';
 export * from './core/turn.js';
-export * from './core/geminiRequest.js';
+export * from './core/aiRequest.js';
 export * from './core/coreToolScheduler.js';
 export * from './core/nonInteractiveToolExecutor.js';
+export * from './core/reactTypes.js';
+export * from './core/reactServiceAI.js';
+export * from './core/aiClient.js';
+export * from './core/aiClientAdapter.js';
+export * from './core/planningTypes.js';
+export * from './core/taskPlanner.js';
 
 export * from './code_assist/codeAssist.js';
 export * from './code_assist/oauth2.js';

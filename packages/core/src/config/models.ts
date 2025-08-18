@@ -4,11 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Gemini Models (for backward compatibility)
 export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-pro';
 export const DEFAULT_GEMINI_FLASH_MODEL = 'gemini-2.5-flash';
 export const DEFAULT_GEMINI_FLASH_LITE_MODEL = 'gemini-2.5-flash-lite';
-
 export const DEFAULT_GEMINI_EMBEDDING_MODEL = 'gemini-embedding-001';
+
+// Default Models (provider-agnostic)
+export const DEFAULT_MODEL = 'gemini-2.5-pro';
+export const DEFAULT_FLASH_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_FLASH_LITE_MODEL = 'gemini-2.5-flash-lite';
+export const DEFAULT_EMBEDDING_MODEL = 'gemini-embedding-001';
 
 // OpenAI Models
 export const DEFAULT_OPENAI_MODEL = 'gpt-4o';

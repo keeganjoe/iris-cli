@@ -282,7 +282,7 @@ ${testRootDir}${path.sep}
       const structure = await getFolderStructure(testRootDir, {
         fileService,
         fileFilteringOptions: {
-          respectGeminiIgnore: false,
+          respectIrisIgnore: false,
           respectGitIgnore: false,
         },
       });
@@ -313,7 +313,7 @@ ${testRootDir}${path.sep}
       expect(structure).not.toContain('logs.json');
     });
 
-    it('should not ignore files if respectGeminiIgnore is false', async () => {
+    it('should not ignore files if respectIrisIgnore is false', async () => {
       await fsPromises.writeFile(
         nodePath.join(testRootDir, '.geminiignore'),
         'ignored.txt\nnode_modules/\n.gemini/\n!/.gemini/config.yaml',
@@ -328,7 +328,7 @@ ${testRootDir}${path.sep}
       const structure = await getFolderStructure(testRootDir, {
         fileService,
         fileFilteringOptions: {
-          respectGeminiIgnore: false,
+          respectIrisIgnore: false,
           respectGitIgnore: true, // Explicitly disable gemini ignore only
         },
       });

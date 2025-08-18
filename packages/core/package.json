@@ -4,7 +4,7 @@
   "description": "Iris CLI Core",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/google-gemini/gemini-cli.git"
+    "url": "git+https://github.com/google-gemini/iris-cli.git"
   },
   "type": "module",
   "main": "dist/index.js",
@@ -14,15 +14,20 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
+    "test:openai": "npm run build && node dist/src/test-openai-integration.js",
+    "test:openai-tools": "npm run build && node dist/src/test-openai-tools.js",
+    "test:openai-react": "npm run build && node dist/src/test-openai-react.js",
+    "test:react-compare": "npm run build && node dist/src/test-react-comparison.js",
     "typecheck": "tsc --noEmit"
   },
   "files": [
     "dist"
   ],
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.2",
+    "@ai-sdk/openai": "^1.0.2",
     "@google/genai": "1.9.0",
     "@modelcontextprotocol/sdk": "^1.11.0",
-    "openai": "^4.67.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-logs-otlp-grpc": "^0.52.0",
     "@opentelemetry/exporter-metrics-otlp-grpc": "^0.52.0",
@@ -31,6 +36,7 @@
     "@opentelemetry/sdk-node": "^0.52.0",
     "@types/glob": "^8.1.0",
     "@types/html-to-text": "^9.0.4",
+    "ai": "^4.2.1",
     "ajv": "^8.17.1",
     "chardet": "^2.1.0",
     "diff": "^7.0.0",
@@ -50,16 +56,17 @@
     "simple-git": "^3.28.0",
     "strip-ansi": "^7.1.0",
     "undici": "^7.10.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "iris-cli-test-utils": "file:../test-utils",
     "@types/diff": "^7.0.2",
     "@types/dotenv": "^6.1.1",
     "@types/micromatch": "^4.0.8",
     "@types/minimatch": "^5.1.2",
     "@types/picomatch": "^4.0.1",
     "@types/ws": "^8.5.10",
+    "iris-cli-test-utils": "file:../test-utils",
     "typescript": "^5.3.3",
     "vitest": "^3.1.1"
   },

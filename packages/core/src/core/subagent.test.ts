@@ -16,7 +16,7 @@ import {
   ToolConfig,
 } from './subagent.js';
 import { Config, ConfigParameters } from '../config/config.js';
-import { GeminiChat } from './geminiChat.js';
+import { GeminiChat } from './aiChat.js';
 import { createContentGenerator } from './contentGenerator.js';
 import { getEnvironmentContext } from '../utils/environmentContext.js';
 import { executeToolCall } from './nonInteractiveToolExecutor.js';
@@ -31,7 +31,7 @@ import {
 } from '@google/genai';
 import { ToolErrorType } from '../tools/tool-error.js';
 
-vi.mock('./geminiChat.js');
+vi.mock('./aiChat.js');
 vi.mock('./contentGenerator.js');
 vi.mock('../utils/environmentContext.js');
 vi.mock('./nonInteractiveToolExecutor.js');

@@ -19,7 +19,7 @@ import {
   FunctionDeclaration,
   Type,
 } from '@google/genai';
-import { GeminiChat } from './geminiChat.js';
+import { GeminiChat } from './aiChat.js';
 
 /**
  * @fileoverview Defines the configuration interfaces for a subagent.

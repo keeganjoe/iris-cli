@@ -8,16 +8,16 @@ import { GitIgnoreParser, GitIgnoreFilter } from '../utils/gitIgnoreParser.js';
 import { isGitRepository } from '../utils/gitUtils.js';
 import * as path from 'path';
 
-const GEMINI_IGNORE_FILE_NAME = '.geminiignore';
+const IRIS_IGNORE_FILE_NAME = '.irisignore';
 
 export interface FilterFilesOptions {
   respectGitIgnore?: boolean;
-  respectGeminiIgnore?: boolean;
+  respectIrisIgnore?: boolean;
 }
 
 export class FileDiscoveryService {
   private gitIgnoreFilter: GitIgnoreFilter | null = null;
-  private geminiIgnoreFilter: GitIgnoreFilter | null = null;
+  private irisIgnoreFilter: GitIgnoreFilter | null = null;
   private projectRoot: string;
 
   constructor(projectRoot: string) {
@@ -33,11 +33,11 @@ export class FileDiscoveryService {
     }
     const gParser = new GitIgnoreParser(this.projectRoot);
     try {
-      gParser.loadPatterns(GEMINI_IGNORE_FILE_NAME);
+      gParser.loadPatterns(IRIS_IGNORE_FILE_NAME);
     } catch (_error) {
       // ignore file not found
     }
-    this.geminiIgnoreFilter = gParser;
+    this.irisIgnoreFilter = gParser;
   }
 
   /**
@@ -47,7 +47,7 @@ export class FileDiscoveryService {
     filePaths: string[],
     options: FilterFilesOptions = {
       respectGitIgnore: true,
-      respectGeminiIgnore: true,
+      respectIrisIgnore: true,
     },
   ): string[] {
     return filePaths.filter((filePath) => {
@@ -55,8 +55,8 @@ export class FileDiscoveryService {
         return false;
       }
       if (
-        options.respectGeminiIgnore &&
-        this.shouldGeminiIgnoreFile(filePath)
+        options.respectIrisIgnore &&
+        this.shouldIrisIgnoreFile(filePath)
       ) {
         return false;
       }
@@ -75,11 +75,11 @@ export class FileDiscoveryService {
   }
 
   /**
-   * Checks if a single file should be gemini-ignored
+   * Checks if a single file should be iris-ignored
    */
-  shouldGeminiIgnoreFile(filePath: string): boolean {
-    if (this.geminiIgnoreFilter) {
-      return this.geminiIgnoreFilter.isIgnored(filePath);
+  shouldIrisIgnoreFile(filePath: string): boolean {
+    if (this.irisIgnoreFilter) {
+      return this.irisIgnoreFilter.isIgnored(filePath);
     }
     return false;
   }
@@ -91,21 +91,21 @@ export class FileDiscoveryService {
     filePath: string,
     options: FilterFilesOptions = {},
   ): boolean {
-    const { respectGitIgnore = true, respectGeminiIgnore = true } = options;
+    const { respectGitIgnore = true, respectIrisIgnore = true } = options;
 
     if (respectGitIgnore && this.shouldGitIgnoreFile(filePath)) {
       return true;
     }
-    if (respectGeminiIgnore && this.shouldGeminiIgnoreFile(filePath)) {
+    if (respectIrisIgnore && this.shouldIrisIgnoreFile(filePath)) {
       return true;
     }
     return false;
   }
 
   /**
-   * Returns loaded patterns from .geminiignore
+   * Returns loaded patterns from .irisignore
    */
-  getGeminiIgnorePatterns(): string[] {
-    return this.geminiIgnoreFilter?.getPatterns() ?? [];
+  getIrisIgnorePatterns(): string[] {
+    return this.irisIgnoreFilter?.getPatterns() ?? [];
   }
 }

@@ -29,7 +29,7 @@ import { getCoreSystemPrompt, getCompressionPrompt } from './prompts.js';
 import { getResponseText } from '../utils/generateContentResponseUtilities.js';
 import { checkNextSpeaker } from '../utils/nextSpeakerChecker.js';
 import { reportError } from '../utils/errorReporting.js';
-import { GeminiChat } from './geminiChat.js';
+import { GeminiChat } from './aiChat.js';
 import { retryWithBackoff } from '../utils/retry.js';
 import { getErrorMessage } from '../utils/errors.js';
 import { isFunctionResponse } from '../utils/messageInspectors.js';
@@ -50,6 +50,7 @@ import {
   NextSpeakerCheckEvent,
 } from '../telemetry/types.js';
 import { ClearcutLogger } from '../telemetry/clearcut-logger/clearcut-logger.js';
+import { ReActServiceAI } from './reactServiceAI.js';
 
 function isThinkingSupported(model: string) {
   if (model.startsWith('gemini-2.5')) return true;
@@ -112,6 +113,7 @@ export class GeminiClient {
 
   private readonly loopDetector: LoopDetectionService;
   private lastPromptId: string;
+  private reActService?: ReActServiceAI;
 
   constructor(private config: Config) {
     if (config.getProxy()) {
@@ -130,6 +132,12 @@ export class GeminiClient {
       this.config.getSessionId(),
     );
     this.chat = await this.startChat();
+    
+    // Initialize ReAct service if enabled
+    if (this.config.getReActEnabled?.()) {
+      this.reActService = new ReActServiceAI(this.config);
+      await this.reActService.initialize();
+    }
   }
 
   getContentGenerator(): ContentGenerator {
@@ -145,6 +153,15 @@ export class GeminiClient {
 
   async addHistory(content: Content) {
     this.getChat().addHistory(content);
+  }
+
+  getReActService(): ReActServiceAI | undefined {
+    // Initialize ReAct service if enabled but not yet created
+    if (this.config.getReActEnabled?.() && !this.reActService) {
+      this.reActService = new ReActServiceAI(this.config);
+      // Note: initialize() should be called separately in async context
+    }
+    return this.reActService;
   }
 
   getChat(): GeminiChat {

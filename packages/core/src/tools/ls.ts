@@ -223,9 +223,9 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
         respectGitIgnore:
           params.file_filtering_options?.respect_git_ignore ??
           defaultFileIgnores.respectGitIgnore,
-        respectGeminiIgnore:
+        respectIrisIgnore:
           params.file_filtering_options?.respect_gemini_ignore ??
-          defaultFileIgnores.respectGeminiIgnore,
+          defaultFileIgnores.respectIrisIgnore,
       };
 
       // Get centralized file discovery service
@@ -264,8 +264,8 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
           continue;
         }
         if (
-          fileFilteringOptions.respectGeminiIgnore &&
-          fileDiscovery.shouldGeminiIgnoreFile(relativePath)
+          fileFilteringOptions.respectIrisIgnore &&
+          fileDiscovery.shouldIrisIgnoreFile(relativePath)
         ) {
           geminiIgnoredCount++;
           continue;

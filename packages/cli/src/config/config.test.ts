@@ -55,11 +55,11 @@ vi.mock('iris-cli-core', async () => {
     ),
     DEFAULT_MEMORY_FILE_FILTERING_OPTIONS: {
       respectGitIgnore: false,
-      respectGeminiIgnore: true,
+      respectIrisIgnore: true,
     },
     DEFAULT_FILE_FILTERING_OPTIONS: {
       respectGitIgnore: true,
-      respectGeminiIgnore: true,
+      respectIrisIgnore: true,
     },
   };
 });
@@ -501,7 +501,7 @@ describe('Hierarchical Memory Loading (config.ts) - Placeholder Suite', () => {
       'tree',
       {
         respectGitIgnore: false,
-        respectGeminiIgnore: true,
+        respectIrisIgnore: true,
       },
       undefined, // maxDirs
     );

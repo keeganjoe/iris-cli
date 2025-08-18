@@ -220,7 +220,7 @@ export class IdeClient {
   }
 
   private validateWorkspacePath(): boolean {
-    const ideWorkspacePath = process.env['GEMINI_CLI_IDE_WORKSPACE_PATH'];
+    const ideWorkspacePath = process.env['IRIS_CLI_IDE_WORKSPACE_PATH'];
     if (ideWorkspacePath === undefined) {
       this.setState(
         IDEConnectionStatus.Disconnected,
@@ -249,7 +249,7 @@ export class IdeClient {
   }
 
   private getPortFromEnv(): string | undefined {
-    const port = process.env['GEMINI_CLI_IDE_SERVER_PORT'];
+    const port = process.env['IRIS_CLI_IDE_SERVER_PORT'];
     if (!port) {
       this.setState(
         IDEConnectionStatus.Disconnected,
